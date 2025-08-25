@@ -121,25 +121,29 @@ Ajouter le plugin gnome `....` pour afficher le status de la VM
 
 Installer les composants suivants
 
+### Status du GPU depuis API
+
 - **Python + API serveur**: pour obtenir le status de la vm depuis le hote
   * scripts_vm/status_gpu.py
   * scripts_vm/status_gpu.bat
 
-- **Looking Glass Host**
-    Installation du binaire "host" https://looking-glass.io/artifact/stable/host
+### Accès à la VM depuis l'hote 
+  * Looking Glass Host: installation du binaire "host" https://looking-glass.io/artifact/stable/host
 
-- **AutoHotkey**: 
-    * Installer Autohotkey https://www.autohotkey.com/ pour ajouter des raccourcis supplémentaires avec les manettes
-    * Utilise pour fermer l'émulateur switch depuis une manette xbox par exemple 
-    * Déployer les scritps autohotkey/xinput.ahk et autohotkey/gamepad.ahk
-    * A mettre en démarrage automatique de la VM
-   
-- **SoundSwitch**: Changement rapide de carte son via raccourci clavier → utile pour basculer entre PC et TV HDMI
-    * Installer le logiciel https://soundswitch.aaflalo.me/
-    * Projet github https://github.com/Belphemur/SoundSwitch
+### AutoHotkey
+  * Installer Autohotkey https://www.autohotkey.com/ pour ajouter des raccourcis supplémentaires avec les manettes
+  * Utilise pour fermer l'émulateur switch depuis une manette xbox par exemple 
+  * Déployer les scritps autohotkey/xinput.ahk et autohotkey/gamepad.ahk
+  * A mettre en démarrage automatique de la VM
 
-- **OpenRGB**: pour désactiver LEDs de la carte graphique
+### SoundSwitch
+  * Changement rapide de carte son via raccourci clavier → utile pour basculer entre PC et TV HDMI
+  * Installer le logiciel https://soundswitch.aaflalo.me/
+  * Projet github https://github.com/Belphemur/SoundSwitch
+
+### OpenRGB
+  * pour désactiver LEDs de la carte graphique
     https://openrgb.org/
 
-- **Emulateur Switch**
+### Emulateur Switch 1
   * Installer l'émulateur Ryujinx https://ryujinx.app/ Nintendo Switch 1 Emulator
