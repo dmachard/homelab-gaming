@@ -15,18 +15,18 @@ Ce dépôt documente:
 
 | Composant      | Détails                     |
 |----------------|-----------------------------|
-| CPU            | [Votre modèle CPU]          |
-| GPU            | [Votre modèle GPU]          |
+| CPU            | AMD Ryzen 9 9900X           |
+| GPU            | AMD Radeon™ RX 7800 XT      |
 | Affichage      | Sortie HDMI vers TV + écran |
-| Manette        | ....                        |
+| Manette        | Xbox                        |
 
 ## 🖥️ Système
 
 | Composant      | Détails                     |
 |----------------|-----------------------------|
-| OS             | [ex: Ubuntu 24.04]          |
-| Hyperviseur    | [ex: QEMU + libvirt]        |
-| OS invité      | [ex: Windows 11]            |
+| OS             | Ubuntu 24.04                |
+| Hyperviseur    | QEMU + libvirt              |
+| OS VM          | Windows 10                  |
 
 ## Partie 1 - Configuration de l’hôte (Ubuntu)
 
@@ -90,6 +90,10 @@ Scripts de lancement rapide (/home/user/console/launcher)
 - Ctrl+Alt+Del.sh → envoie Ctrl+Alt+Del à la VM
 - SwitchAudio.sh → change la sortie audio
 
+Ajouter le plugin gnome `....` pour avoir un accès rapide aux raccourcis
+
+![gnome_shortcut](img/gnome_shortcuts.png)
+
 ### Ajouter un raccourci Looking Glass
 
 Créer ~/.local/share/applications/looking-glass-client.desktop :
@@ -104,11 +108,22 @@ Categories=Utility;System;
 Terminal=false
 ```
 
-## Part 2 - VM configuration
+![gnome_plugin](img/gnome_shortcuts.png)
 
-### Installer les composants
+### Status de la VM
+
+Ajouter le plugin gnome `....` pour afficher le status de la VM
+
+![gnome_plugin](img/gnome_gpustatus.png)
+
+
+## Partie 2 - VM configuration
+
+Installer les composants suivants
 
 - **Python + API serveur**: pour obtenir le status de la vm depuis le hote
+  * scripts_vm/status_gpu.py
+
 - **Looking Glass Host**
     https://looking-glass.io/artifact/stable/host
 
