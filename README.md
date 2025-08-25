@@ -108,7 +108,7 @@ Categories=Utility;System;
 Terminal=false
 ```
 
-![gnome_plugin](img/gnome_shortcuts.png)
+![looking_glass](img/looking_glass.png)
 
 ### Status de la VM
 
@@ -123,16 +123,23 @@ Installer les composants suivants
 
 - **Python + API serveur**: pour obtenir le status de la vm depuis le hote
   * scripts_vm/status_gpu.py
+  * scripts_vm/status_gpu.bat
 
 - **Looking Glass Host**
-    https://looking-glass.io/artifact/stable/host
+    Installation du binaire "host" https://looking-glass.io/artifact/stable/host
 
-- **AutoHotkey**: script pour intercepter les touches manette et fermer un émulateur (Ryujinx) 
-    https://www.autohotkey.com/
-- **SoundSwitch**: changement rapide de carte son via raccourci clavier → utile pour basculer entre PC et TV HDMI
-    https://soundswitch.aaflalo.me/
-    https://github.com/Belphemur/SoundSwitch
+- **AutoHotkey**: 
+    * Installer Autohotkey https://www.autohotkey.com/ pour ajouter des raccourcis supplémentaires avec les manettes
+    * Utilise pour fermer l'émulateur switch depuis une manette xbox par exemple 
+    * Déployer les scritps autohotkey/xinput.ahk et autohotkey/gamepad.ahk
+    * A mettre en démarrage automatique de la VM
+   
+- **SoundSwitch**: Changement rapide de carte son via raccourci clavier → utile pour basculer entre PC et TV HDMI
+    * Installer le logiciel https://soundswitch.aaflalo.me/
+    * Projet github https://github.com/Belphemur/SoundSwitch
+
 - **OpenRGB**: pour désactiver LEDs de la carte graphique
     https://openrgb.org/
 
-
+- **Emulateur Switch**
+  * Installer l'émulateur Ryujinx https://ryujinx.app/ Nintendo Switch 1 Emulator
