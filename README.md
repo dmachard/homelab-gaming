@@ -11,7 +11,7 @@ Ce dépôt documente:
 - La même VM peut également être utilisée depuis le **bureau du PC** si besoin pour jouer.
 - Le PC peut toujours être utilisé comme un ordinateur classique.
 
-## 🖥️ L'hôte
+## 🖥️ Hôte
 
 | Composant      | Détails                     |
 |----------------|-----------------------------|
@@ -108,19 +108,16 @@ Terminal=false
 
 ### Installer les composants
 
-- Python + API serveur: pour obtenir le status de la vm depuis le hote
-- Looking Glass Host
+- **Python + API serveur**: pour obtenir le status de la vm depuis le hote
+- **Looking Glass Host**
     https://looking-glass.io/artifact/stable/host
 
-- AutoHotkey: script pour intercepter les touches manette et fermer un émulateur (Ryujinx) 
+- **AutoHotkey**: script pour intercepter les touches manette et fermer un émulateur (Ryujinx) 
     https://www.autohotkey.com/
-- SoundSwitch: changement rapide de carte son via raccourci clavier → utile pour basculer entre PC et TV HDMI
+- **SoundSwitch**: changement rapide de carte son via raccourci clavier → utile pour basculer entre PC et TV HDMI
     https://soundswitch.aaflalo.me/
     https://github.com/Belphemur/SoundSwitch
-- OpenRGB: pour désactiver LEDs de la carte graphique
+- **OpenRGB**: pour désactiver LEDs de la carte graphique
     https://openrgb.org/
 
-### Gestion RGB
-
-## Part 3 - Game setup tuning
 
