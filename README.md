@@ -32,9 +32,32 @@ Ce dépôt documente:
 
 ### Isoler la carte graphique et l’USB
 
+Configuration du nom de la VM dans `./config/config.conf`
+
 ```bash
-$ sudo cat /etc/default/grub
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash iommu=pt vfio-pci.ids=1002:747e,1002:ab30,15b7:5011"
+# Main VM for gamepad attachment
+VM_NAME=Windows10
+
+# Log file location (optional)
+LOGFILE=/tmp/passthrough.log
+```
+
+Exécution scripts_passthrou
+
+```bash
+cd scripts_passthrough/
+./setup.sh --all         # Install all modules (GPU, CPU pinning, gamepad, hugepages, BIOS tweaks)
+./setup.sh --gpu         # Install GPU passthrough support
+./setup.sh --cpu         # Configure CPU pinning for the VM
+./setup.sh --gamepad     # Install gamepad passthrough (VFIO or network)
+./setup.sh --hugepages   # Enable hugepages for memory optimization
+./setup.sh --bios        # Apply BIOS passthrough and UEFI/OVMF tweaks
+```
+
+Redémarrer la machine et exécuter une seconde fois
+
+```bash
+sudo ./setup.sh --all
 ```
 
 ### Créer la VM
@@ -147,3 +170,7 @@ Installer les composants suivants
 
 ### Emulateur Switch 1
   * Installer l'émulateur Ryujinx https://ryujinx.app/ Nintendo Switch 1 Emulator
+
+### Pare feu
+  * Activer le pare-feu et bloquer l'ensemble des flux entrants et sortants
+    exception pour le flux tcp/8081 entrant
