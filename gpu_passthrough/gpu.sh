@@ -7,16 +7,22 @@ source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 # Global variables
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="/etc/passthrough/config.conf"
-DEFAULT_STATE_FILE="/tmp/passthrough_setup.state"
+STATE_FILE="/tmp/passthrough_setup.state"
+LOGFILE="/tmp/passthrough_setup.log"
 
-# Load configuration
-if [[ -f "$CONFIG_FILE" ]]; then
-    source "$CONFIG_FILE"
-fi
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
 
-# Set defaults if not configured
-VM_NAME="${VM_NAME:-$DEFAULT_VM}"
-STATE_FILE="${STATE_FILE:-$DEFAULT_STATE_FILE}"
+LOG_FILE="${LOG_FILE:-/tmp/passthrough_setup.log}"
+
+log()     { echo -e "${2:-$NC}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}" | tee -a "$LOG_FILE"; }
+error()   { log "ERROR:   $1" "$RED";   exit 1; }
+warning() { log "WARNING: $1" "$YELLOW"; }
+success() { log "SUCCESS: $1" "$GREEN"; }
+info()    { log "INFO:    $1" "$BLUE";  }
 
 # Progress bar function
 show_progress() {
@@ -58,11 +64,11 @@ detect_cpu_vendor() {
 check_virtualization() {
     info "Checking virtualization support..."
 
-    if ! lscpu | grep -q "Virtualization"; then
+    if ! lscpu | grep -E -iq "Virtualization|Virtualisation"; then
         error "Virtualization not enabled in BIOS. Please enable VT-x/VT-d (Intel) or AMD-V/AMD-Vi (AMD)"
     fi
 
-    local virt_type=$(lscpu | grep "Virtualization" | awk '{print $2}')
+    local virt_type=$(lscpu | grep -E -i "Virtualization|Virtualisation" | awk '{print $2}')
     success "Virtualization enabled: $virt_type"
 }
 
@@ -184,6 +190,7 @@ install_dependencies() {
     
     local packages=(
         # Virtu
+        "vim"
         "qemu-kvm"
         "virt-manager"
         "bridge-utils"
@@ -220,7 +227,7 @@ install_dependencies() {
         "libwayland-dev"
         "wayland-protocols"
         "libxcb-shm0-dev"
-	"libxcb-xfixes0-dev"
+	    "libxcb-xfixes0-dev"
 
         # audio
         "libpipewire-0.3-dev"
@@ -292,22 +299,8 @@ configure_vfio() {
     fi
     
     echo "options vfio-pci ids=$device_ids" | sudo tee /etc/modprobe.d/vfio.conf
-    
-    # Blacklist GPU drivers
-    sudo tee /etc/modprobe.d/blacklist-gpu.conf > /dev/null <<EOF
-blacklist nouveau
-blacklist nvidia
-blacklist nvidiafb
-blacklist rivafb
-blacklist nvidia_drm
-blacklist nvidia_uvm
-blacklist nvidia_modeset
-blacklist amdgpu
-blacklist radeon
-EOF
-    
+
     sudo update-initramfs -c -k "$(uname -r)"
-    
     success "VFIO configured for devices: $device_ids"
 }
 
@@ -425,9 +418,8 @@ main() {
     	configure_vfio
     	install_looking_glass
 
-	sudo rm -f "$STATE_FILE"
-	echo "PASSTHROUGH_GPU=${GPUS[$PASSTHROUGH_GPU,desc]}" > "$STATE_FILE"
-	echo "PASSTHROUGH_AUDIO=${AUDIO_DEVICES[$PASSTHROUGH_AUDIO,desc]}" >> "$STATE_FILE"
+        echo "PASSTHROUGH_GPU=${GPUS[$PASSTHROUGH_GPU,desc]}" > "$STATE_FILE"
+        echo "PASSTHROUGH_AUDIO=${AUDIO_DEVICES[$PASSTHROUGH_AUDIO,desc]}" >> "$STATE_FILE"
 
     	info "Initial setup complete. A system reboot is required to apply GRUB and VFIO changes."
     	echo -e "\n${YELLOW}Please reboot your system now. After reboot, re-run this script for next steps.${NC}"

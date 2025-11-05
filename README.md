@@ -32,32 +32,17 @@ Ce dépôt documente:
 
 ### Isoler la carte graphique et l’USB
 
-Configuration du nom de la VM dans `./config/config.conf`
+Exécution le script GPU passthrough pour isoler la carte graphique
 
 ```bash
-# Main VM for gamepad attachment
-VM_NAME=Windows10
-
-# Log file location (optional)
-LOGFILE=/tmp/passthrough.log
+cd gpu_passthrough/
+./gpu.sh
 ```
 
-Exécution scripts_passthrou
+Redémarrer la machine et exécuter une seconde fois pour vérifier l'isolation
 
 ```bash
-cd scripts_passthrough/
-./setup.sh --all         # Install all modules (GPU, CPU pinning, gamepad, hugepages, BIOS tweaks)
-./setup.sh --gpu         # Install GPU passthrough support
-./setup.sh --cpu         # Configure CPU pinning for the VM
-./setup.sh --gamepad     # Install gamepad passthrough (VFIO or network)
-./setup.sh --hugepages   # Enable hugepages for memory optimization
-./setup.sh --bios        # Apply BIOS passthrough and UEFI/OVMF tweaks
-```
-
-Redémarrer la machine et exécuter une seconde fois
-
-```bash
-sudo ./setup.sh --all
+sudo ./gpu.sh
 ```
 
 ### Créer la VM
