@@ -5,6 +5,7 @@ set -euo pipefail
 # Global variables
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOGFILE="/var/log/looking_glass_setup.log"
+VM_NAME="win10
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -160,16 +161,17 @@ install_looking_glass() {
     info "Installing..."
     sudo make install >> "$LOGFILE" 2>&1 || error "Installation failed. See $LOGFILE"
 
-    # ---------------------------
-    # Create desktop entry
-    # ---------------------------
+    info " Create desktop entry..."
+    mkdir -p "/home/$SUDO_USER/console"
+    cp vm-gpu.py /home/$SUDO_USER/console
+
 	ICON_DIR="/home/$SUDO_USER/.local/share/icons"
 	mkdir -p "$ICON_DIR"
-	wget -O "$ICON_DIR/looking-glass.png" https://upload.wikimedia.org/wikipedia/commons/5/5e/Windows_10x_Icon.png
+	wget -O "$ICON_DIR/looking-glass.png" https://raw.githubusercontent.com/dmachard/homelab-gaming/refs/heads/main/looking_glass/Windows_10_Icon.png
 
-DESKTOP_DIR="/home/$SUDO_USER/.local/share/applications"
-mkdir -p "$DESKTOP_DIR"
-cat > "$DESKTOP_DIR/looking-glass-client.desktop" <<EOF
+    DESKTOP_DIR="/home/$SUDO_USER/.local/share/applications"
+    mkdir -p "$DESKTOP_DIR"
+    cat > "$DESKTOP_DIR/looking-glass-client.desktop" <<EOF
 [Desktop Entry]
 Name=Windows Gaming
 Exec=looking-glass-client -F
@@ -177,11 +179,26 @@ Icon=$ICON_DIR/looking-glass.png
 Type=Application
 Categories=Utility;System;
 Terminal=false
+Actions=Start;Stop;CtrlAltSupp;SwitchAudio;
+
+[Desktop Action Start]
+Name=Start Windows
+Exec=/usr/bin/python3 "/home/$SUDO_USER/console/vm-gpu.py" "start" --vm-name "$VM_NAME"
+
+[Desktop Action Stop]
+Name=Stop Windows
+Exec=/usr/bin/python3 "/home/$SUDO_USER/console/vm-gpu.py" "stop" --vm-name "$VM_NAME"
+
+[Desktop Action CtrlAltSupp]
+Name=Ctrl Alt Supp
+Exec=/usr/bin/python3 "/home/$SUDO_USER/console/vm-gpu.py" "ctrl-alt-del" --vm-name "$VM_NAME"
+
+[Desktop Action SwitchAudio]
+Name=Switch Audio
+Exec=/usr/bin/python3 "/home/$SUDO_USER/console/vm-gpu.py" "switch-audio" --vm-name "$VM_NAME"
 EOF
 
     success "Looking Glass installed and configured"
-
-    success "Looking Glass installed"
 }
 
 
