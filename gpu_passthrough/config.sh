@@ -235,70 +235,33 @@ EOF
     success "VFIO configured for devices: $device_ids"
 }
 
-verify_setup() {
-    info "1. Verify GPU isolation:"
-    if ! lspci -k | grep -A 3 -E 'VGA|3D' | grep -B 3 vfio-pci > /dev/null; then
-        info "No GPUs currently using vfio-pci."
-    else
-        lspci -k | grep -A 3 -E 'VGA|3D' | grep -B 3 vfio-pci
-    fi
-
-    info "2. Audio devices using vfio-pci driver:"
-    if ! lspci -k | grep -A 3 -E 'Audio' | grep -B 3 vfio-pci > /dev/null; then
-        info "No audio devices currently using vfio-pci."
-    else
-        lspci -k | grep -A 3 -E 'Audio' | grep -B 3 vfio-pci
-    fi
-
-    info "3. Verify modules are loaded:"
-    local missing_modules=()
-    for mod in vfio vfio_pci vfio_iommu_type1; do
-        if ! lsmod | grep -q "^$mod"; then
-            missing_modules+=("$mod")
-        fi
-    done
-
-    if [[ ${#missing_modules[@]} -eq 0 ]]; then
-        success "All VFIO modules are loaded."
-    else
-        info "Missing VFIO modules: ${missing_modules[*]}"
-    fi
-}
-
 # Main setup function
 main() {
     check_root
+    sudo rm -f "$STATE_FILE"
 
-    if [[ ! -f $STATE_FILE ]]; then
+    check_virtualization
+    check_iommu
+    detect_gpus
+    detect_audio_controllers
 
-    	check_virtualization
-    	check_iommu
-    	detect_gpus
-    	detect_audio_controllers
+    info "Please select hardware for passthrough:"
+    select_passthrough_gpu
+    select_passthrough_audio
 
-    	info "Please select hardware for passthrough:"
-    	select_passthrough_gpu
-    	select_passthrough_audio
+    info "Setup will configure:"
+    info "  - GPU: ${GPUS[$PASSTHROUGH_GPU,desc]}"
+    info "  - Audio: ${AUDIO_DEVICES[$PASSTHROUGH_AUDIO,desc]}"
 
-    	info "Setup will configure:"
-    	info "  - GPU: ${GPUS[$PASSTHROUGH_GPU,desc]}"
-        info "  - Audio: ${AUDIO_DEVICES[$PASSTHROUGH_AUDIO,desc]}"
+    info "Starting installation..."
+    configure_grub
+    configure_vfio
 
-    	info "Starting installation..."
-    	configure_grub
-    	configure_vfio
+    echo "PASSTHROUGH_GPU=${GPUS[$PASSTHROUGH_GPU,desc]}" > "$STATE_FILE"
+    echo "PASSTHROUGH_AUDIO=${AUDIO_DEVICES[$PASSTHROUGH_AUDIO,desc]}" >> "$STATE_FILE"
 
-        echo "PASSTHROUGH_GPU=${GPUS[$PASSTHROUGH_GPU,desc]}" > "$STATE_FILE"
-        echo "PASSTHROUGH_AUDIO=${AUDIO_DEVICES[$PASSTHROUGH_AUDIO,desc]}" >> "$STATE_FILE"
-
-    	info "Initial setup complete. A system reboot is required to apply GRUB and VFIO changes."
-    	echo -e "\n${YELLOW}Please reboot your system now. After reboot, re-run this script for next steps.${NC}"
-    
-    else
-        info "Checking setup..."
-        verify_setup
-	sudo rm -f "$STATE_FILE"
-    fi
+    info "Initial setup complete. A system reboot is required to apply GRUB and VFIO changes."
+    echo -e "\n${YELLOW}Please reboot your system now. After reboot, re-run this script for next steps.${NC}"
 }
 
 # Trap errors
