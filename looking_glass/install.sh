@@ -4,7 +4,7 @@ set -euo pipefail
 
 # Global variables
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOGFILE="/tmp/passthrough_setup.log"
+LOGFILE="/var/log/looking_glass_setup.log"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -20,19 +20,30 @@ warning() { log "WARNING: $1" "$YELLOW"; }
 success() { log "SUCCESS: $1" "$GREEN"; }
 info()    { log "INFO:    $1" "$BLUE";  }
 
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        error "This script must be run as root"
+    fi
+}
+
+show_progress() {
+    local current=$1
+    local total=$2
+    local width=50
+    local percentage=$((current * 100 / total))
+    local completed=$((current * width / total))
+    
+    printf "\r["
+    printf "%*s" $completed | tr ' ' '='
+    printf "%*s" $((width - completed)) | tr ' ' '-'
+    printf "] %d%% (%d/%d)" $percentage $current $total
+}
+
 
 install_dependencies() {
     info "Installing required packages..."
     
     local packages=(
-        # Virtu
-        "vim"
-        "qemu-kvm"
-        "virt-manager"
-        "bridge-utils"
-        "virt-viewer"
-        "ovmf"
-
         # Compilation / build
         "linux-headers-$(uname -r)"
         "dkms"
@@ -110,10 +121,7 @@ install_looking_glass() {
 
     # Extract version from dkms.conf
     kvmfr_ver=$(grep '^PACKAGE_VERSION' dkms.conf | cut -d'"' -f2)
-
-    # Remove existing version (ignore errors)
     dkms remove -m kvmfr -v "$kvmfr_ver" --all 2>/dev/null || true
-
     dkms install .
     cd ..
 
@@ -123,6 +131,20 @@ install_looking_glass() {
 
     # Create udev rule
     echo "SUBSYSTEM==\"kvmfr\", OWNER=\"$SUDO_USER\", GROUP=\"kvm\", MODE=\"0660\"" | tee /etc/udev/rules.d/99-kvmfr.rules
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger
+
+    # AppArmor
+    mkdir -p /etc/apparmor.d/local/abstractions
+    echo -e "# Looking Glass\n/dev/kvmfr0 rw," | tee /etc/apparmor.d/local/abstractions/libvirt-qemu
+    systemctl reload apparmor
+
+    # TODO cgroups
+    #LIBVIRT_CONF="/etc/libvirt/qemu.conf"
+    #if grep -q "cgroup_device_acl" "$LIBVIRT_CONF"; then
+    #    sed -i '/cgroup_device_acl = \[/,/\]/ s|\]|    "/dev/kvmfr0"\n]|' "$LIBVIRT_CONF"
+    #fi
+    #systemctl restart libvirtd
 
     # Build client
     info "Building Looking Glass client..."
@@ -137,6 +159,27 @@ install_looking_glass() {
 
     info "Installing..."
     sudo make install >> "$LOGFILE" 2>&1 || error "Installation failed. See $LOGFILE"
+
+    # ---------------------------
+    # Create desktop entry
+    # ---------------------------
+	ICON_DIR="/home/$SUDO_USER/.local/share/icons"
+	mkdir -p "$ICON_DIR"
+	wget -O "$ICON_DIR/looking-glass.png" https://upload.wikimedia.org/wikipedia/commons/5/5e/Windows_10x_Icon.png
+
+DESKTOP_DIR="/home/$SUDO_USER/.local/share/applications"
+mkdir -p "$DESKTOP_DIR"
+cat > "$DESKTOP_DIR/looking-glass-client.desktop" <<EOF
+[Desktop Entry]
+Name=Windows Gaming
+Exec=looking-glass-client -F
+Icon=$ICON_DIR/looking-glass.png
+Type=Application
+Categories=Utility;System;
+Terminal=false
+EOF
+
+    success "Looking Glass installed and configured"
 
     success "Looking Glass installed"
 }

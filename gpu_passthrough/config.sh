@@ -257,8 +257,20 @@ main() {
     configure_grub
     configure_vfio
 
-    echo "PASSTHROUGH_GPU=${GPUS[$PASSTHROUGH_GPU,desc]}" > "$STATE_FILE"
-    echo "PASSTHROUGH_AUDIO=${AUDIO_DEVICES[$PASSTHROUGH_AUDIO,desc]}" >> "$STATE_FILE"
+            {
+            echo "PASSTHROUGH_GPU_PCI=\"${GPUS[$PASSTHROUGH_GPU,pci]}\""
+            echo "PASSTHROUGH_GPU_VENDOR=\"${GPUS[$PASSTHROUGH_GPU,vendor]}\""
+            echo "PASSTHROUGH_GPU_DEVICE=\"${GPUS[$PASSTHROUGH_GPU,device]}\""
+            echo "PASSTHROUGH_GPU_DESC=\"${GPUS[$PASSTHROUGH_GPU,desc]}\""
+            if [[ -n ${PASSTHROUGH_AUDIO:-} ]]; then
+                echo "PASSTHROUGH_AUDIO_PCI=\"${AUDIO_DEVICES[$PASSTHROUGH_AUDIO,pci]}\""
+                echo "PASSTHROUGH_AUDIO_VENDOR=\"${AUDIO_DEVICES[$PASSTHROUGH_AUDIO,vendor]}\""
+                echo "PASSTHROUGH_AUDIO_DEVICE=\"${AUDIO_DEVICES[$PASSTHROUGH_AUDIO,device]}\""
+                echo "PASSTHROUGH_AUDIO_DESC=\"${AUDIO_DEVICES[$PASSTHROUGH_AUDIO,desc]}\""
+            fi
+        } > "$STATE_FILE"
+
+        success "State saved to $STATE_FILE"
 
     info "Initial setup complete. A system reboot is required to apply GRUB and VFIO changes."
     echo -e "\n${YELLOW}Please reboot your system now. After reboot, re-run this script for next steps.${NC}"

@@ -1,4 +1,5 @@
 <domain xmlns:qemu="http://libvirt.org/schemas/domain/qemu/1.0" type="kvm">
+  <seclabel type='none'/>    
   <name>win10</name>
   <uuid>f693918f-8936-4beb-8ec9-af152a63aefc</uuid>
   <metadata>
@@ -63,7 +64,6 @@
     <emulator>/usr/bin/qemu-system-x86_64</emulator>
     <disk type="file" device="cdrom">
       <driver name="qemu" type="raw"/>
-      <source file="/var/lib/libvirt/images/virtio-win-0.1.271.iso"/>
       <target dev="sda" bus="sata"/>
       <readonly/>
       <boot order="1"/>

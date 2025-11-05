@@ -43,27 +43,16 @@ Redémarrer la machine et exécuter une seconde fois pour vérifier l'isolation
 
 ```bash
 cd gpu_passthrough/
-sudo ./config.sh
+sudo ./check.sh
 ```
 
 ### Créer la VM
 
-👉 Exemple de configuration libvirt XML (Windows 10) :
+Import de la VM
 
-```xml
-<domain xmlns:qemu="http://libvirt.org/schemas/domain/qemu/1.0" type="kvm">
-   ...
-</domain>
-```
-
-Tuning
-```xml
-  <qemu:commandline>
-    <qemu:arg value="-device"/>
-    <qemu:arg value="ivshmem-plain,id=shmem0,memdev=looking-glass,bus=pcie.0,addr=0x11"/>
-    <qemu:arg value="-object"/>
-    <qemu:arg value="memory-backend-file,id=looking-glass,mem-path=/dev/kvmfr0,size=128M,share=yes"/>
-  </qemu:commandline>
+```bash
+cd vm_qemu
+./import_vm.sh
 ```
 
 ### Reconfigurer le réseau pour une IP fixe
@@ -86,6 +75,16 @@ $ virsh net-edit default
   </ip>
 </network>
 ```
+
+### Install Looking Glass Client
+
+cd looking_glass
+./install.sh
+
+L'application est disponible via l'icone
+
+![looking_glass](img/looking_glass.png)
+
 
 ### Déployer le script de gestion GPU vm-gpu.py
 
