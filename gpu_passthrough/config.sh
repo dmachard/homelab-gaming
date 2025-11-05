@@ -2,11 +2,8 @@
 
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
-
 # Global variables
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_FILE="/etc/passthrough/config.conf"
 STATE_FILE="/tmp/passthrough_setup.state"
 LOGFILE="/tmp/passthrough_setup.log"
 
@@ -185,78 +182,6 @@ select_passthrough_audio() {
     done
 }
 
-install_dependencies() {
-    info "Installing required packages..."
-    
-    local packages=(
-        # Virtu
-        "vim"
-        "qemu-kvm"
-        "virt-manager"
-        "bridge-utils"
-        "virt-viewer"
-        "ovmf"
-
-        # Compilation / build
-        "linux-headers-$(uname -r)"
-        "dkms"
-        "build-essential"
-        "gcc"
-        "g++"
-        "cmake"
-        "binutils-dev"
-        "pkg-config"
-
-        # Polices
-        "fonts-dejavu-core"
-        "libfontconfig-dev"
-
-        # OpenGL / EGL / GLES
-        "libegl-dev"
-        "libgl-dev"
-        "libgles-dev"
-
-        # Wayland & X11
-        "libx11-dev"
-        "libxcursor-dev"
-        "libxi-dev"
-        "libxinerama-dev"
-        "libxpresent-dev"
-        "libxss-dev"
-        "libxkbcommon-dev"
-        "libwayland-dev"
-        "wayland-protocols"
-        "libxcb-shm0-dev"
-	    "libxcb-xfixes0-dev"
-
-        # audio
-        "libpipewire-0.3-dev"
-        "libpulse-dev"
-        "libsamplerate0-dev"
-
-        # misc
-        "libspice-protocol-dev"
-        "nettle-dev"
-    )
-    
-    for ((i=0; i<${#packages[@]}; i++)); do
-        show_progress $((i+1)) ${#packages[@]}
-        sudo apt-get install -y "${packages[$i]}" >> "$LOGFILE" 2>&1
-    done
-    echo # New line after progress bar
-    
-    success "All packages installed"
-}
-
-configure_libvirt() {
-    info "Configuring libvirt..."
-    
-    systemctl enable libvirtd.service
-    systemctl start libvirtd.service
-    usermod -aG libvirt "$SUDO_USER"
-    
-    success "Libvirt configured."
-}
 
 configure_grub() {
     info "Configuring GRUB for IOMMU and VFIO..."
@@ -299,66 +224,15 @@ configure_vfio() {
     fi
     
     echo "options vfio-pci ids=$device_ids" | sudo tee /etc/modprobe.d/vfio.conf
+    
+    sudo tee /etc/modules-load.d/vfio.conf > /dev/null <<EOF
+vfio
+vfio_pci
+vfio_iommu_type1
+EOF
 
     sudo update-initramfs -c -k "$(uname -r)"
     success "VFIO configured for devices: $device_ids"
-}
-
-install_looking_glass() {
-    info "Installing Looking Glass..."
-
-    local lg_version="B7"
-    local lg_url="https://looking-glass.io/artifact/$lg_version/source"
-    local lg_dir="/tmp/looking-glass-$lg_version"
-
-    # Download and extract
-    cd /tmp
-    if [[ ! -f "looking-glass-$lg_version.tar.gz" ]]; then
-        wget -O "looking-glass-$lg_version.tar.gz" "$lg_url"
-    fi
-
-    if [[ -d "$lg_dir" ]]; then
-        rm -rf "$lg_dir"
-    fi
-
-    tar -xzf "looking-glass-$lg_version.tar.gz"
-    cd "$lg_dir"
-
-    # Install kernel module
-    info "Installing Looking Glass kernel module..."
-    cd module
-
-    # Extract version from dkms.conf
-    kvmfr_ver=$(grep '^PACKAGE_VERSION' dkms.conf | cut -d'"' -f2)
-
-    # Remove existing version (ignore errors)
-    dkms remove -m kvmfr -v "$kvmfr_ver" --all 2>/dev/null || true
-
-    dkms install .
-    cd ..
-
-    # Configure kvmfr
-    echo "options kvmfr static_size_mb=128" | tee /etc/modprobe.d/kvmfr.conf
-    echo "kvmfr" | tee /etc/modules-load.d/kvmfr.conf
-
-    # Create udev rule
-    echo "SUBSYSTEM==\"kvmfr\", OWNER=\"$SUDO_USER\", GROUP=\"kvm\", MODE=\"0660\"" | tee /etc/udev/rules.d/99-kvmfr.rules
-
-    # Build client
-    info "Building Looking Glass client..."
-    mkdir -p client/build
-    cd client/build
-
-    info "Running CMake..."
-    cmake .. >> "$LOGFILE" 2>&1 || error "CMake configuration failed. See $LOGFILE"
-
-    info "Compiling..."
-    make -j"$(nproc)" >> "$LOGFILE" 2>&1 || error "Build failed. See $LOGFILE"
-
-    info "Installing..."
-    sudo make install >> "$LOGFILE" 2>&1 || error "Installation failed. See $LOGFILE"
-
-    success "Looking Glass installed"
 }
 
 verify_setup() {
@@ -376,19 +250,18 @@ verify_setup() {
         lspci -k | grep -A 3 -E 'Audio' | grep -B 3 vfio-pci
     fi
 
-    info "3. Check Looking Glass device node:"
-    if [ -e /dev/kvmfr0 ]; then
-        ls -l /dev/kvmfr0
-        info "Looking Glass device /dev/kvmfr0 exists."
-    else
-        error "Looking Glass device /dev/kvmfr0 not found. Is the kvmfr module loaded?"
-    fi
+    info "3. Verify modules are loaded:"
+    local missing_modules=()
+    for mod in vfio vfio_pci vfio_iommu_type1; do
+        if ! lsmod | grep -q "^$mod"; then
+            missing_modules+=("$mod")
+        fi
+    done
 
-    info "4. Verify Looking Glass client installation:"
-    if command -v looking-glass-client >/dev/null 2>&1; then
-        info "Looking Glass client is installed."
+    if [[ ${#missing_modules[@]} -eq 0 ]]; then
+        success "All VFIO modules are loaded."
     else
-        error "Looking Glass client is not installed or not in PATH."
+        info "Missing VFIO modules: ${missing_modules[*]}"
     fi
 }
 
@@ -412,11 +285,8 @@ main() {
         info "  - Audio: ${AUDIO_DEVICES[$PASSTHROUGH_AUDIO,desc]}"
 
     	info "Starting installation..."
-    	install_dependencies
-    	configure_libvirt
     	configure_grub
     	configure_vfio
-    	install_looking_glass
 
         echo "PASSTHROUGH_GPU=${GPUS[$PASSTHROUGH_GPU,desc]}" > "$STATE_FILE"
         echo "PASSTHROUGH_AUDIO=${AUDIO_DEVICES[$PASSTHROUGH_AUDIO,desc]}" >> "$STATE_FILE"

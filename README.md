@@ -24,7 +24,7 @@ Ce dépôt documente:
 
 | Composant      | Détails                     |
 |----------------|-----------------------------|
-| OS             | Ubuntu 24.04                |
+| OS             | Ubuntu 25.10                |
 | Hyperviseur    | QEMU + libvirt              |
 | OS VM          | Windows 10                  |
 
@@ -36,13 +36,14 @@ Exécution le script GPU passthrough pour isoler la carte graphique
 
 ```bash
 cd gpu_passthrough/
-./gpu.sh
+sudo ./config.sh
 ```
 
 Redémarrer la machine et exécuter une seconde fois pour vérifier l'isolation
 
 ```bash
-sudo ./gpu.sh
+cd gpu_passthrough/
+sudo ./config.sh
 ```
 
 ### Créer la VM
@@ -102,7 +103,7 @@ Ajouter le plugin gnome `....` pour avoir un accès rapide aux raccourcis
 
 ![gnome_shortcut](img/gnome_shortcuts.png)
 
-### Ajouter un raccourci Looking Glass
+### Install Looking Glass Client
 
 Créer ~/.local/share/applications/looking-glass-client.desktop :
 
