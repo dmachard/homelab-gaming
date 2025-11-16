@@ -80,8 +80,8 @@ cd looking_glass
 
 L'application est disponible via l'icone
 
-<img src="img/looking_glass_green.png" width="150" title="looking_glass"></td>
-
+<img src="img/looking_glass_green.png" width="100" title="looking_glass"></td>
+<img src="img/looking_glass_red.png" width="100" title="looking_glass"></td>
 
 ## Partie 2 - VM configuration
 
