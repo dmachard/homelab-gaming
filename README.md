@@ -73,12 +73,14 @@ cd vm_qemu
 
 ### Install & Config Looking Glass Client
 
+```bash
 cd looking_glass
 ./install.sh
+```
 
 L'application est disponible via l'icone
 
-![looking_glass](img/looking_glass_green.png)
+<img src="img/looking_glass_green.png" width="150" title="looking_glass"></td>
 
 
 ## Partie 2 - VM configuration
