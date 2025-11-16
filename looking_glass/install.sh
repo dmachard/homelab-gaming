@@ -182,12 +182,12 @@ Terminal=false
 Actions=Start;Stop;CtrlAltSupp;SwitchAudio;
 
 [Desktop Action Start]
-Name=Start Windows
-Exec=/usr/bin/python3 "/home/$SUDO_USER/console/vm-gpu.py" "start" --vm-name "$VM_NAME"
+Name=Start VM
+Exec=bash -c '/usr/bin/python3 "/home/$SUDO_USER/console/vm-gpu.py" "start" --vm-name "$VM_NAME" && ln -sf /home/$SUDO_USER/.local/share/icons/looking-glass-green.png /home/$SUDO_USER/.local/share/icons/looking-glass-current.png && notify-send "Windows VM" "VM Started"'
 
 [Desktop Action Stop]
-Name=Stop Windows
-Exec=/usr/bin/python3 "/home/$SUDO_USER/console/vm-gpu.py" "stop" --vm-name "$VM_NAME"
+Name=Stop VM
+Exec=bash -c '/usr/bin/python3 "/home/$SUDO_USER/console/vm-gpu.py" "stop" --vm-name "$VM_NAME" && ln -sf /home/$SUDO_USER/.local/share/icons/looking-glass-red.png /home/$SUDO_USER/.local/share/icons/looking-glass-current.png && notify-send "Windows VM" "VM Stopped"'
 
 [Desktop Action CtrlAltSupp]
 Name=Ctrl Alt Supp

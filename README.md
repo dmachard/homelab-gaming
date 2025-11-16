@@ -39,6 +39,22 @@ cd gpu_passthrough/
 sudo ./config.sh
 ```
 
+Editer le fichier `/etc/libvirt/qemu.conf` pour ajouter `/dev/kvmfr0`
+
+```bash
+$ sudo vim /etc/libvirt/qemu.conf
+
+cgroup_device_acl = [
+    "/dev/null", "/dev/full", "/dev/zero",
+    "/dev/random", "/dev/urandom",
+   "/dev/ptmx", "/dev/kvm",
+    "/dev/userfaultfd",
+    "/dev/kvmfr0"
+]
+
+sudo systemctl restart libvirtd
+```
+
 Redémarrer la machine et exécuter une seconde fois pour vérifier l'isolation
 
 ```bash
@@ -55,14 +71,15 @@ cd vm_qemu
 ./import_vm.sh
 ```
 
-### Install Looking Glass Client
+### Install & Config Looking Glass Client
 
 cd looking_glass
 ./install.sh
 
 L'application est disponible via l'icone
 
-![looking_glass](img/looking_glass.png)
+![looking_glass](img/looking_glass_green.png)
+
 
 ## Partie 2 - VM configuration
 
