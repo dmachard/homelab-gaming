@@ -1,45 +1,45 @@
 # homelab-gaming
 
-Ce guide permet de transformer un PC Linux en station de jeu hybride TV / PC avec passthrough GPU.
+This guide helps transform a Linux PC into a hybrid TV / PC gaming station using GPU passthrough.
 
 ## 🧩 Introduction
 
-Ce dépôt documente:
+This repository documents:
 
-- Un **PC hébergeant une machine virtuelle (VM)** avec **GPU passthrough** est utilisé comme station de jeu.
-- La VM est **connectée à une TV** pour du gaming familial avec des manettes sans fil.
-- La même VM peut également être utilisée depuis le **bureau du PC** si besoin pour jouer.
-- Le PC peut toujours être utilisé comme un ordinateur classique.
+- A **PC hosting a virtual machine (VM)** with **GPU passthrough** used as a gaming station.
+- The VM is **connected to a TV** for family gaming with wireless controllers.
+- The same VM can also be used from the **PC desktop** if needed for gaming.
+- The PC can still be used as a classic computer.
 
-## 🖥️ Hôte
+## 🖥️ Host
 
-| Composant      | Détails                     |
+| Component      | Details                     |
 |----------------|-----------------------------|
 | CPU            | AMD Ryzen 9 9900X           |
 | GPU            | AMD Radeon™ RX 7800 XT      |
-| Affichage      | Sortie HDMI vers TV + écran |
-| Manette        | Xbox                        |
+| Display        | HDMI output to TV + screen  |
+| Controller     | Xbox                        |
 
-## 🖥️ Système
+## 🖥️ System
 
-| Composant      | Détails                     |
-|----------------|-----------------------------|
-| OS             | Ubuntu 25.10                |
-| Hyperviseur    | QEMU + libvirt              |
-| OS VM          | Windows 10                  |
+| Component      | Details                                    |
+|----------------|--------------------------------------------|
+| OS             | Ubuntu 25.10 or Ubuntu 26.04               |
+| Hypervisor     | QEMU + libvirt                             |
+| VM OS          | Windows 10                                 |
 
-## Partie 1 - Configuration de l’hôte (Ubuntu)
+## Part 1 - Host Configuration (Ubuntu)
 
-### Isoler la carte graphique et l’USB
+### Isolate GPU and USB
 
-Exécution le script GPU passthrough pour isoler la carte graphique
+Run the GPU passthrough script to isolate the graphics card:
 
 ```bash
 cd gpu_passthrough/
 sudo ./config.sh
 ```
 
-Editer le fichier `/etc/libvirt/qemu.conf` pour ajouter `/dev/kvmfr0`
+Edit the file `/etc/libvirt/qemu.conf` to add `/dev/kvmfr0`:
 
 ```bash
 $ sudo vim /etc/libvirt/qemu.conf
@@ -55,16 +55,16 @@ cgroup_device_acl = [
 sudo systemctl restart libvirtd
 ```
 
-Redémarrer la machine et exécuter une seconde fois pour vérifier l'isolation
+Restart the machine and run a second time to verify isolation:
 
 ```bash
 cd gpu_passthrough/
 sudo ./check.sh
 ```
 
-### Importer la VM
+### Import the VM
 
-Import de la VM
+VM Import:
 
 ```bash
 cd vm_qemu
@@ -75,45 +75,45 @@ cd vm_qemu
 
 ```bash
 cd looking_glass
-./install.sh
+sudo ./install.sh
 ```
 
-L'application est disponible via l'icone
+The application is available via the icon:
 
 <img src="img/looking_glass_green.png" width="80" title="looking_glass"></td>
 <img src="img/looking_glass_red.png" width="80" title="looking_glass"></td>
 
-## Partie 2 - VM configuration
+## Part 2 - VM Configuration
 
-Installer les composants suivants
+Install the following components:
 
-### Status du GPU depuis API
+### GPU Status via API
 
-- **Python + API serveur**: pour obtenir le status de la vm depuis le hote
+- **Python + API server**: to get the VM status from the host
   * scripts_vm/status_gpu.py
   * scripts_vm/status_gpu.bat
 
-### Accès à la VM depuis l'hote 
-  * Looking Glass Host: installation du binaire "host" https://looking-glass.io/artifact/stable/host
+### Accessing the VM from the host
+  * Looking Glass Host: installation of the "host" binary https://looking-glass.io/artifact/stable/host
 
 ### AutoHotkey
-  * Installer Autohotkey https://www.autohotkey.com/ pour ajouter des raccourcis supplémentaires avec les manettes
-  * Utilise pour fermer l'émulateur switch depuis une manette xbox par exemple 
-  * Déployer les scritps autohotkey/xinput.ahk et autohotkey/gamepad.ahk
-  * A mettre en démarrage automatique de la VM
+  * Install AutoHotkey https://www.autohotkey.com/ to add extra shortcuts with controllers
+  * Used to close the switch emulator from an Xbox controller, for example
+  * Deploy scripts `autohotkey/xinput.ahk` and `autohotkey/gamepad.ahk`
+  * Set to start automatically with the VM
 
 ### SoundSwitch
-  * Changement rapide de carte son via raccourci clavier → utile pour basculer entre PC et TV HDMI
-  * Installer le logiciel https://soundswitch.aaflalo.me/
-  * Projet github https://github.com/Belphemur/SoundSwitch
+  * Quickly switch sound cards via keyboard shortcut → useful for switching between PC and HDMI TV
+  * Install the software https://soundswitch.aaflalo.me/
+  * GitHub project https://github.com/Belphemur/SoundSwitch
 
 ### OpenRGB
-  * pour désactiver LEDs de la carte graphique
+  * To disable graphics card LEDs
     https://openrgb.org/
 
-### Emulateur Switch 1
-  * Installer l'émulateur Ryujinx https://ryujinx.app/ Nintendo Switch 1 Emulator
+### Switch 1 Emulator
+  * Install the Ryujinx emulator https://ryujinx.app/ Nintendo Switch 1 Emulator
 
-### Pare feu
-  * Activer le pare-feu et bloquer l'ensemble des flux entrants et sortants
-    exception pour le flux tcp/8081 entrant
+### Firewall
+  * Enable the firewall and block all incoming and outgoing traffic
+    Exception for incoming tcp/8081 traffic

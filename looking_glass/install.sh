@@ -4,8 +4,8 @@ set -euo pipefail
 
 # Global variables
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOGFILE="/var/log/looking_glass_setup.log"
-VM_NAME="win10
+LOG_FILE="/var/log/looking_glass_setup.log"
+VM_NAME="win10"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -89,7 +89,7 @@ install_dependencies() {
     
     for ((i=0; i<${#packages[@]}; i++)); do
         show_progress $((i+1)) ${#packages[@]}
-        sudo apt-get install -y "${packages[$i]}" >> "$LOGFILE" 2>&1
+        sudo apt-get install -y "${packages[$i]}" >> "$LOG_FILE" 2>&1
     done
     echo # New line after progress bar
     
@@ -153,21 +153,30 @@ install_looking_glass() {
     cd client/build
 
     info "Running CMake..."
-    cmake .. >> "$LOGFILE" 2>&1 || error "CMake configuration failed. See $LOGFILE"
+    cmake .. >> "$LOG_FILE" 2>&1 || error "CMake configuration failed. See $LOG_FILE"
 
     info "Compiling..."
-    make -j"$(nproc)" >> "$LOGFILE" 2>&1 || error "Build failed. See $LOGFILE"
+    make -j"$(nproc)" >> "$LOG_FILE" 2>&1 || error "Build failed. See $LOG_FILE"
 
     info "Installing..."
-    sudo make install >> "$LOGFILE" 2>&1 || error "Installation failed. See $LOGFILE"
+    sudo make install >> "$LOG_FILE" 2>&1 || error "Installation failed. See $LOG_FILE"
 
     info " Create desktop entry..."
     mkdir -p "/home/$SUDO_USER/console"
-    cp vm-gpu.py /home/$SUDO_USER/console
+    cp "$SCRIPT_DIR/vm-gpu.py" "/home/$SUDO_USER/console"
 
 	ICON_DIR="/home/$SUDO_USER/.local/share/icons"
 	mkdir -p "$ICON_DIR"
 	wget -O "$ICON_DIR/looking-glass.png" https://raw.githubusercontent.com/dmachard/homelab-gaming/refs/heads/main/looking_glass/Windows_10_Icon.png
+	wget -O "$ICON_DIR/looking-glass-green.png" https://raw.githubusercontent.com/dmachard/homelab-gaming/refs/heads/main/img/looking_glass_green.png
+	wget -O "$ICON_DIR/looking-glass-red.png" https://raw.githubusercontent.com/dmachard/homelab-gaming/refs/heads/main/img/looking_glass_red.png
+    
+    # Copy icons to the local folder as well
+    cp "$ICON_DIR/looking-glass-green.png" "$SCRIPT_DIR/"
+    cp "$ICON_DIR/looking-glass-red.png" "$SCRIPT_DIR/"
+
+    # Initial state: red (stopped)
+    ln -sf "$ICON_DIR/looking-glass-red.png" "$ICON_DIR/looking-glass-current.png"
 
     DESKTOP_DIR="/home/$SUDO_USER/.local/share/applications"
     mkdir -p "$DESKTOP_DIR"
@@ -175,7 +184,7 @@ install_looking_glass() {
 [Desktop Entry]
 Name=Windows Gaming
 Exec=looking-glass-client -F
-Icon=$ICON_DIR/looking-glass.png
+Icon=$ICON_DIR/looking-glass-current.png
 Type=Application
 Categories=Utility;System;
 Terminal=false
@@ -183,11 +192,11 @@ Actions=Start;Stop;CtrlAltSupp;SwitchAudio;
 
 [Desktop Action Start]
 Name=Start VM
-Exec=bash -c '/usr/bin/python3 "/home/$SUDO_USER/console/vm-gpu.py" "start" --vm-name "$VM_NAME" && ln -sf /home/$SUDO_USER/.local/share/icons/looking-glass-green.png /home/$SUDO_USER/.local/share/icons/looking-glass-current.png && notify-send "Windows VM" "VM Started"'
+Exec=bash -c '/usr/bin/python3 "/home/$SUDO_USER/console/vm-gpu.py" "start" --vm-name "$VM_NAME" && ln -sf /home/$SUDO_USER/.local/share/icons/looking-glass-green.png /home/$SUDO_USER/.local/share/icons/looking-glass-current.png && touch /home/$SUDO_USER/.local/share/applications/looking-glass-client.desktop && notify-send "Windows VM" "VM Started"'
 
 [Desktop Action Stop]
 Name=Stop VM
-Exec=bash -c '/usr/bin/python3 "/home/$SUDO_USER/console/vm-gpu.py" "stop" --vm-name "$VM_NAME" && ln -sf /home/$SUDO_USER/.local/share/icons/looking-glass-red.png /home/$SUDO_USER/.local/share/icons/looking-glass-current.png && notify-send "Windows VM" "VM Stopped"'
+Exec=bash -c '/usr/bin/python3 "/home/$SUDO_USER/console/vm-gpu.py" "stop" --vm-name "$VM_NAME" && ln -sf /home/$SUDO_USER/.local/share/icons/looking-glass-red.png /home/$SUDO_USER/.local/share/icons/looking-glass-current.png && touch /home/$SUDO_USER/.local/share/applications/looking-glass-client.desktop && notify-send "Windows VM" "VM Stopped"'
 
 [Desktop Action CtrlAltSupp]
 Name=Ctrl Alt Supp
@@ -197,6 +206,11 @@ Exec=/usr/bin/python3 "/home/$SUDO_USER/console/vm-gpu.py" "ctrl-alt-del" --vm-n
 Name=Switch Audio
 Exec=/usr/bin/python3 "/home/$SUDO_USER/console/vm-gpu.py" "switch-audio" --vm-name "$VM_NAME"
 EOF
+
+    # Fix ownership
+    chown -R "$SUDO_USER:$SUDO_USER" "/home/$SUDO_USER/console"
+    chown -R "$SUDO_USER:$SUDO_USER" "$ICON_DIR"
+    chown -R "$SUDO_USER:$SUDO_USER" "$DESKTOP_DIR"
 
     success "Looking Glass installed and configured"
 }
