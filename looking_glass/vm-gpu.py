@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import subprocess
 import json
 import base64
@@ -6,11 +7,13 @@ import time
 import sys
 import argparse
 
+VIRSH_ENV = dict(os.environ, LC_ALL="C")
+
 def check_vm_status(vm_name):
     """Check VM state and QEMU agent availability"""
     try:
         cmd = ["virsh", "domstate", vm_name]
-        output = subprocess.check_output(cmd, stderr=subprocess.PIPE)
+        output = subprocess.check_output(cmd, stderr=subprocess.PIPE, env=VIRSH_ENV)
         state = output.decode().strip()
         return state
     except subprocess.CalledProcessError as e:
@@ -22,7 +25,7 @@ def start_vm(vm_name):
     print(f"Starting VM {vm_name}...")
     try:
         cmd = ["virsh", "start", vm_name]
-        subprocess.check_output(cmd, stderr=subprocess.PIPE)
+        subprocess.check_output(cmd, stderr=subprocess.PIPE, env=VIRSH_ENV)
         print(f"VM {vm_name} started - status: success")
 
         print("Waiting for VM to be ready...")
@@ -60,7 +63,7 @@ def shutdown_vm(vm_name):
         for i in range(60):
             try:
                 cmd = ["virsh", "domstate", vm_name]
-                output = subprocess.check_output(cmd, stderr=subprocess.PIPE)
+                output = subprocess.check_output(cmd, stderr=subprocess.PIPE, env=VIRSH_ENV)
                 state = output.decode().strip()
                 if state == "shut off":
                     print("VM shutdown successfully - status: success")
@@ -71,7 +74,7 @@ def shutdown_vm(vm_name):
 
         print("Graceful shutdown failed, forcing shutdown... - status: warning")
         cmd = ["virsh", "destroy", vm_name]
-        subprocess.check_output(cmd, stderr=subprocess.PIPE)
+        subprocess.check_output(cmd, stderr=subprocess.PIPE, env=VIRSH_ENV)
         print("VM forcefully shutdown - status: success")
         return True
 
@@ -96,7 +99,7 @@ def wait_for_agent(vm_name):
 def virsh_qemu_agent_command(vm, command_dict):
     cmd = ["virsh", "qemu-agent-command", vm, json.dumps(command_dict)]
     try:
-        output = subprocess.check_output(cmd, stderr=subprocess.PIPE)
+        output = subprocess.check_output(cmd, stderr=subprocess.PIPE, env=VIRSH_ENV)
         return json.loads(output)
     except subprocess.CalledProcessError as e:
         print(f"Command failed: {e} - status: failed", file=sys.stderr)
@@ -282,7 +285,7 @@ def send_key_sequence(vm_name, keys):
     print(f"Sending key sequence: {keys}")
     try:
         cmd = ["virsh", "qemu-monitor-command", vm_name, "--hmp", f"sendkey {keys}"]
-        subprocess.check_output(cmd, stderr=subprocess.PIPE)
+        subprocess.check_output(cmd, stderr=subprocess.PIPE, env=VIRSH_ENV)
         print(f"Key sequence sent successfully - status: success")
         return True
     except subprocess.CalledProcessError as e:
